@@ -1,64 +1,103 @@
 
 .DEFAULT_GOAL := help
 
-TEMPLATE := templates/solution.rs
-BIN_DIR  := src/bin
-BIN      := cf_$(name)
-FILE     := $(BIN_DIR)/$(BIN).rs
-
+# Arguments
+platform ?= codeforces
+name     ?=
 input    ?= tests/input.txt
 expected ?= tests/expected.txt
 
-.PHONY: new run test build check clean help check-name lint fix setup
+# Paths
+PLATFORM_DIR := platforms/$(platform)
+TARGET       := $(name)
+ACTUAL       := tests/actual.txt
 
-check-name:
-	@test -n "$(name)" || { echo "Error: name is required"; exit 1; }
+# Platform configuration
+ifeq ($(platform),leetcode)
+    TEMPLATE := templates/leetcode.rs
+    SRC_DIR  := $(PLATFORM_DIR)/tests
+else
+    TEMPLATE := templates/stdin.rs
+    SRC_DIR  := $(PLATFORM_DIR)/src/bin
+endif
 
-new: check-name
-	@mkdir -p $(BIN_DIR)
-	@if [ -f "$(FILE)" ]; then \
-		echo "Error: $(FILE) already exists"; \
-		exit 1; \
-	fi
-	@cp $(TEMPLATE) $(FILE)
-	@echo "Created $(FILE)"
+FILE := $(SRC_DIR)/$(TARGET).rs
 
-run: check-name
-	@cargo run --quiet --release --bin $(BIN) $(if $(input),< "$(input)")
+.PHONY: new run test build lint fix setup clean help validate
 
-test: check-name
-	@test -f "$(input)" || { echo "Input file not found"; exit 1; }
-	@test -f "$(expected)" || { echo "Expected file not found"; exit 1; }
-	@actual=$$(mktemp) || exit 1; \
-	trap 'rm -f "$$actual"' EXIT; \
-	cargo run --quiet --release --bin $(BIN) < "$(input)" > "$$actual" || exit 1; \
-	awk -f scripts/compare.awk "$(expected)" "$$actual"
+# Validation
+validate:
+	@test -n "$(name)" || { echo "[ERROR] name is required"; exit 1; }
+	@test -f "$(PLATFORM_DIR)/Cargo.toml" || { echo "[ERROR] Unknown platform: $(platform)"; exit 1; }
 
-build: check-name
-	@cargo build --release --bin $(BIN)
+# Generate solution
+new: validate
+	@mkdir -p "$(SRC_DIR)"
+	@test ! -e "$(FILE)" || { echo "[ERROR] File already exists"; exit 1; }
+	@cp "$(TEMPLATE)" "$(FILE)"
+	@echo "[CREATED] $(FILE)"
 
-check: check-name
-	@cargo check --bin $(BIN)
+# Execute and test
+ifeq ($(platform),leetcode)
 
-clean:
-	@cargo clean
+run test: validate
+	@cargo test --release -p "$(platform)" --test "$(TARGET)"
 
+build: validate
+	@cargo test --release -p "$(platform)" --test "$(TARGET)" --no-run
+
+else
+
+run: validate
+	@cargo run --quiet --release -p "$(platform)" --bin "$(TARGET)" < "$(input)"
+
+test: validate
+	@cargo run --quiet --release -p "$(platform)" --bin "$(TARGET)" < "$(input)" > "$(ACTUAL)"
+	@awk -f scripts/compare.awk "$(expected)" "$(ACTUAL)"
+
+build: validate
+	@cargo build --release -p "$(platform)" --bin "$(TARGET)"
+
+endif
+
+# Code quality
 lint:
-	@cargo clippy --all-targets
+	@cargo clippy --workspace --all-targets
 
 fix:
-	@cargo clippy --fix --all-targets --allow-dirty
+	@cargo clippy --fix --workspace --all-targets --allow-dirty
 
+# Project setup
 setup:
+	@mkdir -p tests
+	@touch tests/input.txt tests/expected.txt
 	@git config core.hooksPath .githooks
 	@echo "[PASS] Setup completed"
 
+# Cleanup
+clean:
+	@cargo clean
+	@rm -f "$(ACTUAL)"
+
+# Help
 help:
-	@echo "Usage:"
+	@echo "Usage: make <command> [platform=<platform>] [name=<problem>]"
+	@echo ""
+	@echo "Commands:"
+	@echo "  new    Generate solution from template"
+	@echo "  run    Execute solution"
+	@echo "  test   Compare expected and actual output"
+	@echo "  build  Compile solution"
+	@echo "  lint   Run Clippy"
+	@echo "  fix    Auto-fix Clippy issues"
+	@echo "  setup  Initialize development environment"
+	@echo "  clean  Remove build artifacts"
+	@echo "  help   Show available commands"
+	@echo ""
+	@echo "Default platform: codeforces"
+	@echo ""
+	@echo "Examples:"
 	@echo "  make new name=1999a"
-	@echo "  make run name=1999a"
 	@echo "  make test name=1999a"
-	@echo "  make test name=1999a input=tests/input.txt expected=tests/expected.txt"
-	@echo "  make build name=1999a"
-	@echo "  make check name=1999a"
-	@echo "  make clean"
+	@echo "  make new platform=leetcode name=1"
+	@echo "  make test platform=leetcode name=1"

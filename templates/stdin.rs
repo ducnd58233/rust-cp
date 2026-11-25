@@ -1,12 +1,13 @@
+
 use std::io::{self, Read, Write};
 use std::str::{FromStr, SplitWhitespace};
-
 
 struct Scanner<'a> {
     tokens: SplitWhitespace<'a>,
 }
 
-impl <'a> Scanner<'a> {
+#[allow(dead_code)]
+impl<'a> Scanner<'a> {
     fn new(input: &'a str) -> Self {
         Self {
             tokens: input.split_whitespace(),
@@ -14,16 +15,17 @@ impl <'a> Scanner<'a> {
     }
 
     fn next<T: FromStr>(&mut self) -> T {
-        self.tokens
-            .next()
-            .unwrap()
-            .parse()
-            .ok()
-            .unwrap()
+        self.tokens.next().unwrap().parse().ok().unwrap()
+    }
+
+    fn vec<T: FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.next()).collect()
     }
 }
 
-fn solve(sc: &mut Scanner<'_>, out: &mut impl Write) {}
+fn solve(_sc: &mut Scanner<'_>, _out: &mut impl Write) {
+    todo!("Implement solution");
+}
 
 fn main() {
     let mut input = String::new();
@@ -32,9 +34,12 @@ fn main() {
     let mut sc = Scanner::new(&input);
     let mut out = io::BufWriter::new(io::stdout().lock());
 
+    // Multiple test cases
     let t: usize = sc.next();
 
     for _ in 0..t {
         solve(&mut sc, &mut out);
     }
+
+    // solve(&mut sc, &mut out);
 }
