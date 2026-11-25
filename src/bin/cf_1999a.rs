@@ -1,0 +1,46 @@
+use std::io::{self, Read, Write};
+use std::str::{FromStr, SplitWhitespace};
+
+
+struct Scanner<'a> {
+    tokens: SplitWhitespace<'a>,
+}
+
+impl <'a> Scanner<'a> {
+    fn new(input: &'a str) -> Self {
+        Self {
+            tokens: input.split_whitespace(),
+        }
+    }
+
+    fn next<T: FromStr>(&mut self) -> T {
+        self.tokens
+            .next()
+            .unwrap()
+            .parse()
+            .ok()
+            .unwrap()
+    }
+}
+
+fn solve(sc: &mut Scanner<'_>, out: &mut impl Write) {
+    let n: i32 = sc.next();
+
+    let result = n / 10 + n % 10;
+
+    writeln!(out, "{result}").unwrap();
+}
+
+fn main() {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+
+    let mut sc = Scanner::new(&input);
+    let mut out = io::BufWriter::new(io::stdout().lock());
+
+    let t: usize = sc.next();
+
+    for _ in 0..t {
+        solve(&mut sc, &mut out);
+    }
+}

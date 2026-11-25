@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -e
+
+make lint
+
+echo "[PASS] Ready to commit"
