@@ -1,5 +1,8 @@
 {
-    sub(/[[:space:]]+$/, "")
+    $1 = $1
+
+    if ($0 == "")
+        next
 }
 
 FILENAME == ARGV[1] {
@@ -12,9 +15,9 @@ FILENAME == ARGV[1] {
 }
 
 END {
-    print "========== TEST RESULT =========="
-
     total = n > m ? n : m
+
+    print "========== TEST RESULT =========="
 
     for (i = 1; i <= total; i++) {
         if (i <= n && i <= m && ("s:" expected[i]) == ("s:" actual[i]))
