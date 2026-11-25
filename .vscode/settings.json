@@ -1,0 +1,10 @@
+{
+  // Use the rustup proxy so rust-analyzer matches the pinned toolchain
+  // (rust-toolchain.toml) instead of the extension's bundled server.
+  "rust-analyzer.server.path": "~/.cargo/bin/rust-analyzer",
+  "rust-analyzer.check.command": "clippy",
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+  }
+}
