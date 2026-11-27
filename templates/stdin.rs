@@ -18,6 +18,10 @@ impl<'a> Scanner<'a> {
         self.tokens.next().unwrap().parse().ok().unwrap()
     }
 
+    fn next_str(&mut self) -> &'a str {
+        self.tokens.next().unwrap()
+    }
+
     fn vec<T: FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.next()).collect()
     }
